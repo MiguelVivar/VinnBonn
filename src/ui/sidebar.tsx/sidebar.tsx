@@ -1,9 +1,29 @@
 'use client'
 import Image from "next/image"
-import { FaGithub, FaInstagram, FaTiktok, FaLinkedin } from 'react-icons/fa'
-import { motion } from "framer-motion"
+import { FaGithub, FaInstagram, FaTiktok, FaLinkedin, FaBars, FaTimes } from 'react-icons/fa'
+import { motion, AnimatePresence } from "framer-motion"
+import { useState, useEffect } from "react"
 
 const SideBar = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Check if we're on mobile when component mounts and when window resizes
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 1024) // lg breakpoint
+    }
+    
+    // Initial check
+    checkIfMobile()
+    
+    // Add event listener for window resize
+    window.addEventListener('resize', checkIfMobile)
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', checkIfMobile)
+  }, [])
+
   const socialLinks = [
     { icon: <FaTiktok/>, url: 'https://www.tiktok.com/@vinnibombom'},
     { icon: <FaGithub/>, url: 'https://github.com/Rinvinvin'},
@@ -12,12 +32,49 @@ const SideBar = () => {
   ]
 
   return (
-    <motion.div 
-      initial={{ x: -300 }}
-      animate={{ x: 0 }}
-      transition={{ duration: 0.6, type: "spring" }}
-      className="h-screen w-full md:w-1/3 lg:w-1/4 top-0 left-0 bg-white shadow-xl lg:flex flex-col items-center justify-center relative p-4 hidden"
-    >
+    <>
+      {/* Mobile toggle button - repositioned to bottom center */}
+      {isMobile && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-violet-700 text-white p-3 rounded-full shadow-xl lg:hidden flex items-center justify-center w-14 h-14"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          {isSidebarOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+        </motion.button>
+      )}
+      
+      {/* Sidebar overlay for mobile */}
+      <AnimatePresence>
+        {isMobile && isSidebarOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.6 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            className="fixed inset-0 bg-black z-40 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar content - modified for bottom positioning on mobile */}
+      <AnimatePresence>
+        {(!isMobile || (isMobile && isSidebarOpen)) && (
+          <motion.div 
+            initial={isMobile ? { y: 500 } : { x: -300 }}
+            animate={{ x: 0, y: 0 }}
+            exit={isMobile ? { y: 500 } : { x: -300 }}
+            transition={{ duration: 0.5, type: "spring", stiffness: 300, damping: 30 }}
+            className={`fixed lg:relative ${isMobile ? 'h-auto max-h-[75vh] w-full bottom-0 left-0 rounded-t-[30px] shadow-2xl pb-20' : 'h-screen w-3/4 md:w-1/2 lg:w-1/4 top-0 left-0'} bg-white z-40 flex flex-col items-center justify-center ${isMobile ? 'px-6 pt-8 pb-20 overflow-auto' : 'p-4'}`}
+          >
+            {/* Mobile handle bar for better UX */}
+            {isMobile && (
+              <div className="w-16 h-1.5 bg-gray-300 rounded-full mb-6 -mt-2"></div>
+            )}
         <motion.div 
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -77,7 +134,10 @@ const SideBar = () => {
             &copy; {new Date().getFullYear()} VinnBonn. Todos los Derechos Reservados.
           </p>
         </motion.footer>
-    </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   )
 }
 
